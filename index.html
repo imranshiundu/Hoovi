@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoovi - Movie Database</title>
+<style>
+body{margin:0;background:#070707;color:#f5f1e8;font-family:Arial,Helvetica,sans-serif}a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 36px));margin:auto}.header{border-bottom:1px solid #252525;background:#090909}.nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-size:30px;font-weight:900}.links{display:flex;gap:18px;color:#b8b0a4}.hero{padding:86px 0;background:linear-gradient(90deg,#080808,#151515)}.hero h1{font-size:72px;line-height:.92;margin:0 0 18px;letter-spacing:-4px}.hero p{color:#b8b0a4;font-size:18px;line-height:1.7;max-width:680px}.btn{display:inline-block;background:#d71920;color:#fff;border-radius:999px;padding:13px 18px;font-weight:800;margin-top:16px}.section{padding:42px 0}.section h2{font-size:38px;margin:0 0 18px;letter-spacing:-2px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.card{background:#151515;border:1px solid #2d2d2d;border-radius:16px;overflow:hidden}.poster{height:260px;background:linear-gradient(135deg,#282828,#101010);padding:18px;display:flex;align-items:end;font-size:26px;font-weight:900;line-height:1}.body{padding:16px}.body h3{margin:0 0 10px}.meta{color:#aaa;display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #333;border-radius:999px;padding:6px 9px;font-size:13px}.footer{border-top:1px solid #252525;color:#999;padding:26px 0}.notice{background:#111;border:1px solid #333;border-radius:16px;padding:18px;color:#b8b0a4}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.nav{height:auto;padding:18px 0;display:block}.links{margin-top:14px;flex-wrap:wrap}.hero h1{font-size:48px}}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="header"><div class="wrap nav"><a class="brand" href="/">Hoovi</a><nav class="links"><a href="#movies">Movies</a><a href="#stars">Stars</a><a href="#genres">Genres</a><a href="#news">News</a><a href="#api">API</a></nav></div></header>
+<section class="hero"><div class="wrap"><h1>The movie database built for discovery.</h1><p>Hoovi is a clean movie catalogue for films, stars, genres, industry updates and a Spring Boot database backend. This static version works without Netlify backend power.</p><a class="btn" href="#movies">Explore movies</a></div></section>
+<main class="wrap">
+<section class="section" id="movies"><h2>Featured movies</h2><div class="grid" id="movieGrid"></div></section>
+<section class="section" id="stars"><h2>Featured stars</h2><div class="grid" id="starGrid"></div></section>
+<section class="section" id="genres"><h2>Genres</h2><div class="grid" id="genreGrid"></div></section>
+<section class="section" id="news"><h2>News</h2><div class="notice">Movie news integration can be connected through the backend later. The static frontend remains available even when Netlify or backend services are down.</div></section>
+<section class="section" id="api"><h2>API</h2><div class="notice">Full API power is available when the Spring Boot backend is deployed separately: /api/movies, /api/actors, /api/genres, and /swagger-ui.html.</div></section>
+</main>
+<footer class="footer"><div class="wrap">Hoovi. Static frontend first, live database backend when deployed.</div></footer>
+<script>
+const fallbackMovies=[['The Shawshank Redemption',1994,'Drama','9.3'],['The Godfather',1972,'Crime','9.2'],['The Dark Knight',2008,'Action','9.0'],['Parasite',2019,'Thriller','8.5'],['Oppenheimer',2023,'Biography','8.3'],['Nairobi Half Life',2012,'African Cinema','7.3'],['Dune',2021,'Sci-Fi','8.0'],['Black Panther',2018,'Adventure','7.3']];
+const stars=['Morgan Freeman','Al Pacino','Christian Bale','Song Kang-ho','Cillian Murphy','Joseph Wairimu','Zendaya','Michael B. Jordan'];
+const genres=['Action','Drama','Crime','Thriller','Sci-Fi','Biography','African Cinema','Adventure'];
+function movieCard(m){return '<article class="card"><div class="poster">'+m[0]+'</div><div class="body"><h3>'+m[0]+'</h3><p class="meta"><span class="pill">'+m[1]+'</span><span class="pill">'+m[2]+'</span><span class="pill">IMDb '+m[3]+'</span></p></div></article>'}
+function textCard(t,s){return '<article class="card"><div class="body"><h3>'+t+'</h3><p class="meta"><span class="pill">'+s+'</span></p></div></article>'}
+document.getElementById('movieGrid').innerHTML=fallbackMovies.map(movieCard).join('');
+document.getElementById('starGrid').innerHTML=stars.map(x=>textCard(x,'Actor')).join('');
+document.getElementById('genreGrid').innerHTML=genres.map(x=>textCard(x,'Genre')).join('');
+</script>
+</body>
+</html>
