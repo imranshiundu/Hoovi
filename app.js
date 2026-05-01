@@ -1,39 +1,23 @@
 const state = {
-  query: "open source ai",
-  mode: "personal",
-  view: "dashboard",
+  query: "open source",
+  view: document.body.dataset.view || "catalog",
   page: 1,
   pageSize: 12,
   items: [],
-  dashboard: null,
+  sourceStats: null,
   status: null,
   syncing: false,
 };
 
 const elements = {
-  aiBriefing: document.getElementById("ai-briefing"),
-  feedList: document.getElementById("feed-list"),
-  heroSummary: document.getElementById("hero-summary"),
-  heroTitle: document.getElementById("hero-title"),
-  modePill: document.getElementById("mode-pill"),
   modalContent: document.getElementById("modal-content"),
   modalOverlay: document.getElementById("modal-overlay"),
-  notesList: document.getElementById("notes-list"),
-  overviewMiniGrid: document.getElementById("overview-mini-grid"),
   picksGrid: document.getElementById("picks-grid"),
   picksMeta: document.getElementById("picks-meta"),
-  pulseChart: document.getElementById("pulse-chart"),
   queryBtn: document.getElementById("query-btn"),
   queryInput: document.getElementById("query-input"),
-  quickLinksList: document.getElementById("quick-links-list"),
-  savedStateList: document.getElementById("saved-state-list"),
-  sourceHealthList: document.getElementById("source-health-list"),
   statusPill: document.getElementById("status-pill"),
-  summaryStrip: document.getElementById("summary-strip"),
-  syncBtn: document.getElementById("sync-btn"),
   toastStack: document.getElementById("toast-stack"),
-  topMoversList: document.getElementById("top-movers-list"),
-  coverageChart: document.getElementById("coverage-chart"),
   topNav: document.getElementById("top-nav"),
   catalogTitle: document.getElementById("catalog-title"),
   pagePrev: document.getElementById("page-prev"),
@@ -44,14 +28,7 @@ const elements = {
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => {
-    const map = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    };
-
+    const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
     return map[char];
   });
 }
@@ -59,91 +36,50 @@ function escapeHtml(value) {
 function showToast(title, copy) {
   const toast = document.createElement("div");
   toast.className = "toast";
-  toast.innerHTML = `
-    <div class="toast-title">${escapeHtml(title)}</div>
-    <div class="toast-copy">${escapeHtml(copy)}</div>
-  `;
+  toast.innerHTML = `<div class="toast-title">${escapeHtml(title)}</div><div class="toast-copy">${escapeHtml(copy)}</div>`;
   elements.toastStack.appendChild(toast);
   window.setTimeout(() => toast.remove(), 3200);
 }
 
 function setSyncState(syncing) {
   state.syncing = syncing;
-  elements.statusPill.textContent = syncing ? "Syncing..." : "Auto-sync on";
-  elements.syncBtn.disabled = syncing;
-  elements.syncBtn.textContent = syncing ? "Syncing..." : "Sync Now";
+  elements.statusPill.textContent = syncing ? "Fetching Data..." : "Ready";
 }
 
 function openUrl(url) {
-  if (!url) {
-    return;
-  }
-  window.open(url, "_blank", "noopener,noreferrer");
+  if (url) window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function downloadResource(url) {
+  if (!url) return;
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = "";
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
+function hasUrl(url) {
+  return typeof url === "string" && url.trim().length > 0;
 }
 
 function renderStatus() {
-  if (!state.status) {
-    return;
+  if (state.status) {
+    const connectorCount = state.status.registry?.connectorCount || 0;
+    elements.statusPill.textContent = state.syncing
+      ? "Fetching..."
+      : `Connected: ${state.status.enabledCount} engines · ${connectorCount} pack connectors`;
   }
-
-  elements.statusPill.textContent = state.syncing ? "Syncing..." : `${state.status.enabledCount} live sources`;
-}
-
-function renderSavedState(items) {
-  elements.savedStateList.innerHTML = items.map((item) => `
-    <div class="stack-item">
-      <div class="stack-item-head">
-        <div class="stack-item-title">${escapeHtml(item.label)}</div>
-        <div class="stack-item-title">${escapeHtml(item.value)}</div>
-      </div>
-    </div>
-  `).join("");
-}
-
-function renderTopMovers(items) {
-  elements.topMoversList.innerHTML = items.map((item) => `
-    <button class="stack-item action-open" type="button" data-url="${escapeHtml(item.url)}">
-      <div class="stack-item-head">
-        <div class="stack-item-title">${escapeHtml(item.title)}</div>
-        <div class="stack-item-meta">${escapeHtml(item.score)}</div>
-      </div>
-      <div class="stack-item-meta">${escapeHtml(item.meta)}</div>
-    </button>
-  `).join("");
-}
-
-function renderSourceHealth(items) {
-  elements.sourceHealthList.innerHTML = items.map((item) => `
-    <div class="stack-item">
-      <div class="stack-item-title">${escapeHtml(item.name)}</div>
-      <div class="stack-item-meta">
-        <span class="status-text ${escapeHtml(item.statusClass)}">${escapeHtml(item.statusText)}</span>
-        · ${escapeHtml(item.meta)}
-      </div>
-    </div>
-  `).join("");
-}
-
-function renderMiniGrid(items) {
-  elements.overviewMiniGrid.innerHTML = items.map((item) => `
-    <div class="mini-card">
-      <div class="mini-card-label">${escapeHtml(item.label)}</div>
-      <div class="mini-card-value">${escapeHtml(item.value)}</div>
-    </div>
-  `).join("");
-}
-
-function renderSummaryStrip(items) {
-  elements.summaryStrip.innerHTML = items.map((item) => `
-    <div class="summary-card">
-      <div class="summary-card-value">${escapeHtml(item.value)}</div>
-      <div class="summary-card-label">${escapeHtml(item.label)}</div>
-    </div>
-  `).join("");
 }
 
 function renderPicks(items) {
-  elements.picksMeta.textContent = `${state.items.length} live items found.`;
+  const stats = state.sourceStats;
+  elements.picksMeta.textContent = stats
+    ? `${items.length} records · APIs ${stats.total} · Connected ${stats.connected} · Failing ${stats.failing} · Keys ${stats.keys}`
+    : `${items.length} live database records found.`;
   
   const start = (state.page - 1) * state.pageSize;
   const pageItems = items.slice(start, start + state.pageSize);
@@ -155,140 +91,55 @@ function renderPicks(items) {
   elements.picksGrid.innerHTML = pageItems.map((item, index) => {
     const globalIndex = start + index;
     const thumbnailHtml = item.thumbnail ? `<div class="pick-thumb"><img src="${escapeHtml(item.thumbnail)}" alt="Thumbnail" loading="lazy"></div>` : '';
+    const openButton = hasUrl(item.externalUrl)
+      ? `<button class="mini-btn" type="button" data-action="launch-pick" data-index="${globalIndex}">Open Source</button>`
+      : `<button class="mini-btn" type="button" disabled>No Source</button>`;
+    const downloadButton = hasUrl(item.downloadUrl)
+      ? `<button class="mini-btn primary" type="button" data-action="download-pick" data-index="${globalIndex}">Download</button>`
+      : `<button class="mini-btn" type="button" disabled>No File</button>`;
     
     return `
       <article class="pick-card" data-index="${globalIndex}">
         <div class="pick-head">
           <span class="source-chip warm">${escapeHtml(item.source)}</span>
-          <span class="pick-score">${escapeHtml(item.metricLabel || "Rank")}: ${escapeHtml(item.metricValue || globalIndex + 1)}</span>
+          <span class="pick-score">${escapeHtml(item.meta || "")}</span>
         </div>
         ${thumbnailHtml}
         <div>
           <div class="pick-title">${escapeHtml(item.title)}</div>
           <div class="pick-subtitle">${escapeHtml(item.subtitle)}</div>
         </div>
-        <div class="pick-summary">${escapeHtml(item.description || item.summary)}</div>
-        <div>
-          <div class="tag-row">
-            ${(item.tags || []).map((tag) => `<span class="tag-chip">${escapeHtml(tag)}</span>`).join("")}
-          </div>
-          <div class="pick-actions">
-            <button class="mini-btn" type="button" data-action="save-pick" data-index="${globalIndex}">Save</button>
-            <button class="mini-btn" type="button" data-action="open-pick" data-index="${globalIndex}">Inspect</button>
-            <button class="mini-btn primary" type="button" data-action="launch-pick" data-index="${globalIndex}">Open</button>
-          </div>
+        <div class="pick-summary">${escapeHtml(item.description || item.summary || "")}</div>
+        <div class="pick-actions">
+          <button class="mini-btn" type="button" data-action="open-pick" data-index="${globalIndex}">Inspect</button>
+          ${openButton}
+          ${downloadButton}
         </div>
       </article>
     `;
   }).join("");
 }
 
-function renderCoverage(items) {
-  const max = Math.max(...items.map((item) => item.count), 1);
-  elements.coverageChart.innerHTML = items.map((item) => `
-    <div class="chart-col">
-      <div class="chart-bar" style="height:${Math.max(24, (item.count / max) * 120)}px"></div>
-      <div class="chart-bar-value">${escapeHtml(item.count)}</div>
-      <div class="chart-bar-label">${escapeHtml(item.label)}</div>
-    </div>
-  `).join("");
-}
-
-function renderPulse(values) {
-  const width = 420;
-  const height = 170;
-  const padding = 10;
-  const max = Math.max(...values, 1);
-  const xStep = values.length > 1 ? (width - padding * 2) / (values.length - 1) : width;
-
-  const points = values.map((value, index) => {
-    const x = padding + (index * xStep);
-    const y = height - padding - ((value / max) * (height - padding * 2));
-    return `${x},${y}`;
-  });
-
-  const line = points.join(" ");
-  const fill = [`${padding},${height - padding}`, ...points, `${width - padding},${height - padding}`].join(" ");
-
-  elements.pulseChart.innerHTML = `
-    <polygon class="pulse-fill" points="${fill}"></polygon>
-    <polyline class="pulse-line" points="${line}"></polyline>
-  `;
-}
-
-function renderFeed(items) {
-  elements.feedList.innerHTML = items.map((item) => `
-    <button class="feed-item action-open" type="button" data-url="${escapeHtml(item.url)}">
-      <div class="feed-item-head">
-        <div class="feed-item-title">${escapeHtml(item.title)}</div>
-        <span class="source-chip">${escapeHtml(item.source)}</span>
-      </div>
-      <div class="feed-item-meta">${escapeHtml(item.meta)}</div>
-      <div class="feed-item-copy">${escapeHtml(item.copy)}</div>
-    </button>
-  `).join("");
-}
-
-function renderQuickLinks(items) {
-  elements.quickLinksList.innerHTML = items.map((item) => `
-    <button class="quick-link action-open" type="button" data-url="${escapeHtml(item.url)}">
-      <span class="quick-link-title">${escapeHtml(item.label)}</span>
-      <span class="quick-link-meta">${escapeHtml(item.meta)}</span>
-    </button>
-  `).join("");
-}
-
-function renderNotes(items) {
-  elements.notesList.innerHTML = items.map((item) => `
-    <div class="note-card">
-      <div class="note-title">${escapeHtml(item.title)}</div>
-      <div class="note-copy">${escapeHtml(item.body)}</div>
-    </div>
-  `).join("");
-}
-
-function renderDashboard() {
-  const data = state.dashboard;
-  if (!data) {
-    return;
-  }
-
-  elements.heroTitle.textContent = data.hero.title;
-  elements.heroSummary.textContent = data.hero.summary;
-  elements.aiBriefing.textContent = data.briefing;
-  elements.modePill.textContent = `Mode: ${data.mode}`;
-  elements.queryInput.value = data.query;
-
-  renderSavedState(data.savedState);
-  renderTopMovers(data.topMovers);
-  renderSourceHealth(data.sourceHealth);
-  renderMiniGrid(data.overviewMini);
-  renderSummaryStrip(data.summary);
-  renderPicks(data.picks);
-  renderCoverage(data.coverage);
-  renderPulse(data.activity);
-  renderFeed(data.feed);
-  renderQuickLinks(data.quickLinks);
-  renderNotes(data.notes);
-}
-
 function renderLoading() {
-  const skeletons = Array.from({ length: 4 }, () => `<div class="skeleton"></div>`).join("");
+  const skeletons = Array.from({ length: 8 }, () => `<div class="skeleton"></div>`).join("");
   elements.picksGrid.innerHTML = skeletons;
-  elements.summaryStrip.innerHTML = skeletons;
-  elements.feedList.innerHTML = skeletons;
-  elements.savedStateList.innerHTML = skeletons;
-  elements.topMoversList.innerHTML = skeletons;
-  elements.sourceHealthList.innerHTML = skeletons;
-  elements.coverageChart.innerHTML = skeletons;
-  elements.quickLinksList.innerHTML = skeletons;
-  elements.notesList.innerHTML = skeletons;
 }
 
 async function fetchStatus() {
-  const response = await fetch("/api/status");
-  state.status = await response.json();
-  renderStatus();
+  try {
+    const response = await fetch("/api/status");
+    state.status = await response.json();
+    renderStatus();
+  } catch (err) {}
+}
+
+async function reloadDataRegistry() {
+  const response = await fetch("/api/reload-data");
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || "Could not reload /data.");
+  }
+  return data;
 }
 
 async function fetchDashboard(query = state.query) {
@@ -297,15 +148,18 @@ async function fetchDashboard(query = state.query) {
 
   try {
     let endpoint = "";
-    if (state.view === "dashboard") endpoint = `/api/dashboard?q=${encodeURIComponent(query)}&mode=${encodeURIComponent(state.mode)}`;
-    else if (state.view === "catalog") endpoint = `/api/catalog?q=${encodeURIComponent(query)}`;
+    if (state.view === "catalog") endpoint = `/api/catalog?q=${encodeURIComponent(query)}`;
     else if (state.view === "movies") endpoint = `/api/movies?q=${encodeURIComponent(query)}`;
     else if (state.view === "anime") endpoint = `/api/anime?q=${encodeURIComponent(query)}`;
-    else if (state.view === "music") endpoint = `/api/music_deezer?q=${encodeURIComponent(query)}`;
+    else if (state.view === "music") endpoint = `/api/music?q=${encodeURIComponent(query)}`;
     else if (state.view === "books") endpoint = `/api/doc?q=${encodeURIComponent(query)}`;
     else if (state.view === "code") endpoint = `/api/code?q=${encodeURIComponent(query)}`;
     else if (state.view === "images") endpoint = `/api/image?q=${encodeURIComponent(query)}`;
     else if (state.view === "videos") endpoint = `/api/video?q=${encodeURIComponent(query)}`;
+    else if (state.view === "packs") endpoint = `/api/packs?q=${encodeURIComponent(query)}`;
+
+    // Default catch-all
+    if (!endpoint) endpoint = `/api/catalog?q=${encodeURIComponent(query)}`;
 
     const response = await fetch(endpoint);
     const data = await response.json();
@@ -314,20 +168,14 @@ async function fetchDashboard(query = state.query) {
       throw new Error(data.error || `Server responded with ${response.status}`);
     }
     
-    if (state.view === "dashboard") {
-      state.dashboard = data;
-      state.query = data.query;
-      state.items = data.picks || [];
-      renderDashboard();
-    } else {
-      state.items = data.items || [];
-      elements.catalogTitle.textContent = `${state.view.charAt(0).toUpperCase() + state.view.slice(1)} Results`;
-      renderPicks(state.items);
-      elements.summaryStrip.innerHTML = "";
-      elements.feedList.innerHTML = "";
-    }
+    state.items = data.items || [];
+    state.sourceStats = data.sourceStats || null;
+    elements.catalogTitle.textContent = `${state.view.charAt(0).toUpperCase() + state.view.slice(1)} Results`;
+    state.page = 1;
+    renderPicks(state.items);
   } catch (error) {
-    showToast("Dashboard error", error.message || "Could not load data.");
+    showToast("Database error", error.message || "Could not load data.");
+    elements.picksGrid.innerHTML = '<p style="color:var(--muted)">No data found or an error occurred.</p>';
   } finally {
     setSyncState(false);
     renderStatus();
@@ -335,28 +183,37 @@ async function fetchDashboard(query = state.query) {
 }
 
 function openModal(index) {
-  const item = state.dashboard?.picks?.[index];
-  if (!item) {
-    return;
-  }
+  const item = state.items[index];
+  if (!item) return;
+
+  const sourceRow = hasUrl(item.externalUrl)
+    ? `<div class="modal-meta-item"><label>Source URL</label> <a href="${escapeHtml(item.externalUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">${escapeHtml(item.externalUrl)}</a></div>`
+    : `<div class="modal-meta-item"><label>Source URL</label> Not provided by this connector</div>`;
+  const downloadRow = hasUrl(item.downloadUrl)
+    ? `<div class="modal-meta-item"><label>Download URL</label> <a href="${escapeHtml(item.downloadUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">${escapeHtml(item.downloadUrl)}</a></div>`
+    : `<div class="modal-meta-item"><label>Download URL</label> No direct file exposed</div>`;
+  const openButton = hasUrl(item.externalUrl)
+    ? `<button class="mini-btn" type="button" data-action="launch-pick" data-index="${index}">Open Source</button>`
+    : "";
+  const downloadButton = hasUrl(item.downloadUrl)
+    ? `<button class="mini-btn primary" type="button" data-action="download-pick" data-index="${index}">Download File</button>`
+    : "";
 
   elements.modalContent.innerHTML = `
     <button class="modal-close" type="button" data-action="close-modal">×</button>
-    <div class="modal-type">${escapeHtml(item.source)} · ${escapeHtml(item.kind)}</div>
+    <div class="modal-type">${escapeHtml(item.source)}</div>
     <h2 class="modal-title">${escapeHtml(item.title)}</h2>
-    <div class="modal-copy">${escapeHtml(item.summary)}</div>
-    <div class="modal-meta-grid">
-      <div class="modal-meta-item"><label>Subtitle</label>${escapeHtml(item.subtitle)}</div>
-      <div class="modal-meta-item"><label>Score</label>${escapeHtml(item.metricLabel)}: ${escapeHtml(item.metricValue)}</div>
-      <div class="modal-meta-item"><label>Tags</label>${escapeHtml(item.tags.join(", "))}</div>
-      <div class="modal-meta-item"><label>Source URL</label>${escapeHtml(item.url)}</div>
+    <div class="modal-copy">${escapeHtml(item.description || item.summary || "")}</div>
+    <div class="modal-meta-grid" style="margin-top:16px;">
+      <div class="modal-meta-item"><label>Category</label> ${escapeHtml(item.subtitle)}</div>
+      ${sourceRow}
+      ${downloadRow}
     </div>
-    <div class="modal-actions">
-      <button class="mini-btn primary" type="button" data-action="launch-pick" data-index="${index}">Open Source</button>
-      <button class="mini-btn" type="button" data-action="save-pick" data-index="${index}">Save To Watchlist</button>
+    <div class="modal-actions" style="margin-top:24px;">
+      ${openButton}
+      ${downloadButton}
     </div>
   `;
-
   elements.modalOverlay.classList.add("open");
 }
 
@@ -367,39 +224,26 @@ function closeModal(event) {
 }
 
 function handleAction(action, index, url) {
-  if (action === "close-modal") {
-    closeModal();
-    return;
-  }
-
-  if (action === "open-pick") {
-    openModal(index);
-    return;
-  }
-
+  if (action === "close-modal") return closeModal();
+  if (action === "open-pick") return openModal(index);
   if (action === "launch-pick") {
-    const item = state.dashboard?.picks?.[index];
-    if (item?.url) {
-      openUrl(item.url);
-    }
+    const item = state.items[index];
+    if (item?.externalUrl) openUrl(item.externalUrl);
     return;
   }
-
-  if (action === "save-pick") {
-    const item = state.dashboard?.picks?.[index];
-    showToast("Saved locally", item ? item.title : "Item");
+  if (action === "download-pick") {
+    const item = state.items[index];
+    if (item?.downloadUrl) downloadResource(item.downloadUrl);
     return;
   }
-
-  if (action === "open-url" && url) {
-    openUrl(url);
-  }
+  if (action === "open-url" && url) openUrl(url);
 }
 
 function bindEvents() {
   elements.queryBtn.addEventListener("click", () => {
     const nextQuery = elements.queryInput.value.trim();
     if (nextQuery) {
+      state.query = nextQuery;
       fetchDashboard(nextQuery);
     }
   });
@@ -408,17 +252,10 @@ function bindEvents() {
     if (event.key === "Enter") {
       const nextQuery = elements.queryInput.value.trim();
       if (nextQuery) {
+        state.query = nextQuery;
         fetchDashboard(nextQuery);
       }
     }
-  });
-
-  elements.syncBtn.addEventListener("click", () => fetchDashboard(state.query));
-
-  elements.modePill.addEventListener("click", () => {
-    state.mode = state.mode === "personal" ? "public" : "personal";
-    fetchDashboard(state.query);
-    showToast("Dashboard mode", `Switched to ${state.mode}.`);
   });
 
   elements.pagePrev.addEventListener("click", () => {
@@ -435,40 +272,40 @@ function bindEvents() {
     }
   });
 
-  elements.topNav.addEventListener("click", (event) => {
-    const target = event.target.closest(".nav-pill");
-    if (!target) return;
-    
-    document.querySelectorAll(".nav-pill").forEach(btn => btn.classList.remove("active"));
-    target.classList.add("active");
-    
-    state.view = target.dataset.view;
-    state.page = 1;
-    fetchDashboard(state.query);
+
+
+  elements.statusPill.addEventListener("click", async () => {
+    try {
+      setSyncState(true);
+      await reloadDataRegistry();
+      await fetchStatus();
+      await fetchDashboard(state.query);
+      showToast("Data registry reloaded", "Hoovi rescanned /data and refreshed the live connector registry.");
+    } catch (error) {
+      showToast("Reload failed", error.message || "Could not reload /data.");
+    } finally {
+      setSyncState(false);
+      renderStatus();
+    }
   });
 
   document.body.addEventListener("click", (event) => {
     const target = event.target.closest("[data-action], .action-open");
-    if (!target) {
-      return;
-    }
-
+    if (!target) return;
     if (target.classList.contains("action-open")) {
       openUrl(target.dataset.url);
       return;
     }
-
     handleAction(target.dataset.action, Number(target.dataset.index), target.dataset.url);
   });
 
   elements.modalOverlay.addEventListener("click", (event) => {
-    if (event.target === elements.modalOverlay) {
-      closeModal(event);
-    }
+    if (event.target === elements.modalOverlay) closeModal(event);
   });
 }
 
 async function init() {
+  elements.queryInput.value = state.query;
   bindEvents();
   await fetchStatus();
   await fetchDashboard(state.query);

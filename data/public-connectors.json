@@ -1,0 +1,234 @@
+{
+  "hoovi_version": 2,
+  "pack": {
+    "id": "public-connectors",
+    "name": "Public Starter Connectors",
+    "description": "Built-in no-auth connectors that prove the generic runner works without any secrets."
+  },
+  "links": [
+    "https://api.tvmaze.com/search/shows",
+    "https://api.jikan.moe/v4/anime",
+    "https://openlibrary.org/search.json",
+    "https://commons.wikimedia.org/w/api.php",
+    "https://archive.org/advancedsearch.php"
+  ],
+  "connectors": [
+    {
+      "id": "tvmaze-public",
+      "name": "TVMaze Public",
+      "source": "TVMaze",
+      "category": "movies",
+      "kind": "movie",
+      "description": "Public TV and show search.",
+      "enabled": true,
+      "tags": ["tv", "shows", "public"],
+      "request": {
+        "url": "https://api.tvmaze.com/search/shows",
+        "query_param": "q"
+      },
+      "response": {
+        "items_path": "$",
+        "mappings": {
+          "id": "show.id",
+          "title": "show.name",
+          "subtitle": "show.genres",
+          "summary": "show.summary",
+          "external_url": "show.url",
+          "thumbnail": "show.image.medium",
+          "meta": "show.premiered"
+        }
+      }
+    },
+    {
+      "id": "jikan-public",
+      "name": "Jikan Public",
+      "source": "Jikan",
+      "category": "anime",
+      "kind": "anime",
+      "description": "Public anime search powered by MyAnimeList data.",
+      "enabled": true,
+      "tags": ["anime", "public"],
+      "request": {
+        "url": "https://api.jikan.moe/v4/anime",
+        "query_param": "q",
+        "static_params": {
+          "limit": 8
+        }
+      },
+      "response": {
+        "items_path": "data",
+        "mappings": {
+          "id": "mal_id",
+          "title": "title",
+          "subtitle": "type",
+          "summary": "synopsis",
+          "external_url": "url",
+          "download_url": "images.jpg.image_url",
+          "thumbnail": "images.jpg.image_url",
+          "meta": "score",
+          "score": "members",
+          "metric_label": {
+            "literal": "Members"
+          },
+          "metric_value": "members"
+        }
+      }
+    },
+    {
+      "id": "openlibrary-public",
+      "name": "Open Library Public",
+      "source": "Open Library",
+      "category": "books",
+      "kind": "book",
+      "description": "Public book search connector.",
+      "enabled": true,
+      "tags": ["books", "public"],
+      "request": {
+        "url": "https://openlibrary.org/search.json",
+        "query_param": "q",
+        "static_params": {
+          "limit": 8
+        }
+      },
+      "response": {
+        "items_path": "docs",
+        "mappings": {
+          "id": "key",
+          "title": "title",
+          "subtitle": "author_name",
+          "external_url": {
+            "template": "https://openlibrary.org{{key}}"
+          },
+          "download_url": {
+            "template": "/api/download?source=openlibrary&ia={{ia.0}}"
+          },
+          "meta": "first_publish_year"
+        },
+        "templates": {
+          "summary": "Open Library work record for {{title}}."
+        }
+      }
+    },
+    {
+      "id": "wikimedia-commons-images",
+      "name": "Wikimedia Commons Images",
+      "source": "Wikimedia Commons",
+      "category": "images",
+      "kind": "image",
+      "description": "No-auth public image search with direct downloadable media URLs.",
+      "enabled": true,
+      "tags": ["images", "public", "downloadable"],
+      "request": {
+        "url": "https://commons.wikimedia.org/w/api.php",
+        "query_param": "gsrsearch",
+        "static_params": {
+          "action": "query",
+          "generator": "search",
+          "gsrnamespace": 6,
+          "gsrlimit": 8,
+          "prop": "imageinfo|info",
+          "iiprop": "url|mime|size|extmetadata",
+          "inprop": "url",
+          "format": "json",
+          "origin": "*"
+        }
+      },
+      "response": {
+        "items_path": "query.pages",
+        "items_mode": "object_values",
+        "mappings": {
+          "id": "pageid",
+          "title": "title",
+          "subtitle": "imageinfo.mime",
+          "summary": "imageinfo.extmetadata.ImageDescription.value",
+          "external_url": "fullurl",
+          "download_url": "imageinfo.url",
+          "thumbnail": "imageinfo.url",
+          "meta": "imageinfo.width"
+        }
+      }
+    },
+    {
+      "id": "archive-modern-video",
+      "name": "Internet Archive Modern Video",
+      "source": "Internet Archive",
+      "category": "videos",
+      "kind": "video",
+      "description": "No-auth public video search, restricted to records from 2000 onward.",
+      "enabled": true,
+      "tags": ["video", "public", "downloadable", "after-2000"],
+      "request": {
+        "url": "https://archive.org/advancedsearch.php",
+        "query_param": "q",
+        "query_template": "({{query}}) AND mediatype:movies AND year:[2000 TO 9999]",
+        "static_params": {
+          "output": "json",
+          "rows": 8,
+          "fl[]": ["identifier", "title", "description", "year", "creator", "downloads"]
+        }
+      },
+      "response": {
+        "items_path": "response.docs",
+        "mappings": {
+          "id": "identifier",
+          "title": "title",
+          "subtitle": "creator",
+          "summary": "description",
+          "year": "year",
+          "meta": "year",
+          "score": "downloads",
+          "external_url": {
+            "template": "https://archive.org/details/{{identifier}}"
+          },
+          "download_url": {
+            "template": "/api/download?source=archive&media=video&ia={{identifier}}"
+          },
+          "thumbnail": {
+            "template": "https://archive.org/services/img/{{identifier}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "archive-modern-audio",
+      "name": "Internet Archive Modern Audio",
+      "source": "Internet Archive",
+      "category": "music",
+      "kind": "song",
+      "description": "No-auth public audio search, restricted to records from 2005 onward.",
+      "enabled": true,
+      "tags": ["music", "audio", "public", "downloadable", "after-2005"],
+      "request": {
+        "url": "https://archive.org/advancedsearch.php",
+        "query_param": "q",
+        "query_template": "({{query}}) AND mediatype:audio AND year:[2005 TO 9999]",
+        "static_params": {
+          "output": "json",
+          "rows": 8,
+          "fl[]": ["identifier", "title", "description", "year", "creator", "downloads"]
+        }
+      },
+      "response": {
+        "items_path": "response.docs",
+        "mappings": {
+          "id": "identifier",
+          "title": "title",
+          "subtitle": "creator",
+          "summary": "description",
+          "year": "year",
+          "meta": "year",
+          "score": "downloads",
+          "external_url": {
+            "template": "https://archive.org/details/{{identifier}}"
+          },
+          "download_url": {
+            "template": "/api/download?source=archive&media=audio&ia={{identifier}}"
+          },
+          "thumbnail": {
+            "template": "https://archive.org/services/img/{{identifier}}"
+          }
+        }
+      }
+    }
+  ]
+}

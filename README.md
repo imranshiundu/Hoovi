@@ -47,3 +47,80 @@ To prevent this and utilize Javascript to its absolute fullest advantage, **Hoov
 HooviDB's central brain is powered by `hoovidb.json` - a massive, unified JSON schema aggregating over **10,000+** open APIs, dataset directories, and internet data meshes into a single, highly queryable index.
 
 By protecting frontend keys and enforcing serverless multi-tier caching, HooviDB serves as the ultimate, hyper-fast window into the world's public data.
+
+## Hoovi Data Packs
+
+Hoovi now supports `/data` as an executable source registry, not just a static catalog.
+
+Supported file styles:
+- legacy mega-catalog JSON like `data/hoovidb.json`
+- plain JSON files full of links or API objects
+- Hoovi data packs with connectors and link lists
+- private Hoovi data packs with credentials when a provider requires a key
+
+### Safe local pattern
+
+Use:
+- `data/*.json` for shareable public packs
+- `data/*.private.json` for local-only packs with credentials
+
+`data/*.private.json` is ignored by git.
+
+### Example pack
+
+See `data/hoovi.pack.example.json`.
+
+Minimal structure:
+
+```json
+{
+  "hoovi_version": 2,
+  "pack": {
+    "id": "my-pack",
+    "name": "My Pack"
+  },
+  "connectors": [
+    {
+      "id": "example-search",
+      "name": "Example Search",
+      "source": "Example API",
+      "category": "custom",
+      "request": {
+        "url": "https://example.com/search",
+        "query_param": "q"
+      },
+      "response": {
+        "items_path": "results",
+        "mappings": {
+          "title": "name",
+          "external_url": "url",
+          "download_url": "file_url"
+        }
+      }
+    }
+  ]
+}
+```
+
+If a connector needs a key, put the real credential only in an ignored `data/*.private.json` pack and reference it with `auth.credential_key`. Do not commit real keys or placeholder keys in public examples.
+
+### Useful routes
+
+- `/api/status` shows registry counts and warnings
+- `/api/registry` lists loaded packs and connectors
+- `/api/reload-data` rescans `/data` without restarting the server
+- `/api/connector?id=<connector-id>&q=<query>` runs a generic connector pack
+- `/api/packs?q=<query>` runs all enabled `/data` connectors
+- `/api/download?...` resolves supported provider downloads such as Open Library Internet Archive files
+
+Current real public media sources:
+- images use Wikimedia Commons with direct image file downloads
+- videos use Internet Archive movie records from 2000 onward
+- music uses Internet Archive audio records from 2005 onward
+
+Every search payload includes numeric `sourceStats` only: total APIs, connected APIs, failing APIs, and credential-backed keys. Hoovi never returns secret values to the frontend.
+
+This means someone can contribute by adding:
+- a simple JSON list of source links
+- a richer connector pack
+- a private local pack with credentials for personal use

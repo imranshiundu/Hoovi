@@ -1,0 +1,71 @@
+{
+  "hoovi_version": 2,
+  "pack": {
+    "id": "starter-pack",
+    "name": "Starter Connector Pack",
+    "description": "Copy this to data/my-pack.json for public no-auth sources, or data/my-pack.private.json for local credentials."
+  },
+  "links": [
+    "https://openlibrary.org/search.json",
+    "https://api.tvmaze.com/search/shows"
+  ],
+  "connectors": [
+    {
+      "id": "tvmaze-pack-search",
+      "name": "TVMaze Pack Search",
+      "source": "TVMaze",
+      "category": "movies",
+      "kind": "movie",
+      "description": "Generic no-auth movie/show connector.",
+      "enabled": true,
+      "tags": ["tv", "shows", "no-auth"],
+      "request": {
+        "url": "https://api.tvmaze.com/search/shows",
+        "query_param": "q"
+      },
+      "response": {
+        "items_path": "$",
+        "mappings": {
+          "id": "show.id",
+          "title": "show.name",
+          "subtitle": "show.genres",
+          "summary": "show.summary",
+          "external_url": "show.url",
+          "thumbnail": "show.image.medium",
+          "meta": "show.premiered"
+        }
+      }
+    },
+    {
+      "id": "openlibrary-pack-search",
+      "name": "Open Library Pack Search",
+      "source": "Open Library",
+      "category": "books",
+      "kind": "book",
+      "description": "No-auth book connector that can expose an Internet Archive download route when Open Library includes an IA id.",
+      "enabled": true,
+      "tags": ["books", "documents", "no-auth", "download-aware"],
+      "request": {
+        "url": "https://openlibrary.org/search.json",
+        "query_param": "q",
+        "static_params": {
+          "limit": 8
+        }
+      },
+      "response": {
+        "items_path": "docs",
+        "mappings": {
+          "id": "key",
+          "title": "title",
+          "subtitle": "author_name",
+          "meta": "first_publish_year"
+        },
+        "templates": {
+          "external_url": "https://openlibrary.org{{key}}",
+          "download_url": "/api/download?source=openlibrary&ia={{ia.0}}",
+          "summary": "Open Library record for {{title}}."
+        }
+      }
+    }
+  ]
+}
