@@ -1,76 +1,130 @@
-# HooviDB - The Universal Data Mesh
+# HooviDB — Universal Free Data Mesh
 
-HooviDB is a massive, unified catalog and database interface designed to seamlessly aggregate and normalize data from across the open web.
+HooviDB is a browser-first public data explorer. It connects one clean frontend to legal, free, open data sources across media, code, books, knowledge graphs, archives, and public API catalogs.
 
-## Architecture 
+This project is **not** a leaked API-key dump. Real provider keys must never be committed or exposed in browser JavaScript. Hoovi prefers no-key sources first, then optional backend/private credentials only when a provider requires them.
 
-The system acts as a high-performance, intelligent middle-layer between the user interface and the chaotic landscape of public data sources.
+## What Hoovi does now
 
-```
+- Searches public images from **Wikimedia Commons**.
+- Searches public video records from **Internet Archive Moving Image**.
+- Supports a Node backend API when deployed on a server/Vercel-style runtime.
+- Still works on static hosts such as Netlify for images/videos through `hoovi-fallback.js`.
+- Reads `/data/*.json` packs as a growing source registry.
+- Keeps secrets out of the frontend.
+
+## Current pages
+
+- `/` — catalog view
+- `/movies.html` — movie/show/media discovery
+- `/anime.html` — anime metadata
+- `/music.html` — public audio/media discovery
+- `/books.html` — book/document discovery
+- `/code.html` — code/package/developer sources
+- `/images.html` — no-key Wikimedia Commons image search
+- `/videos.html` — no-key Internet Archive video search
+- `/packs.html` — local Hoovi data packs
+
+## Architecture
+
+```txt
 HooviDB Frontend
         ↓
-HooviDB Backend API (Vercel Serverless / Node.js)
+Browser no-key fallback for static hosting
         ↓
-Resolvers / Crawlers / Open APIs / Dumps / Public catalogs
+Optional HooviDB backend API
         ↓
-Normalized HooviDB records
+Resolvers / Open APIs / Dumps / Public catalogs
+        ↓
+Normalized Hoovi records
 ```
 
-### Supported Data Formats and Sources
-HooviDB is engineered to handle the biggest datasets without flinching. Through dynamic resolvers, it connects to:
-- **Free / No-Key APIs** (Direct REST integration)
-- **Public JSON Feeds & RSS/Atom**
-- **SPARQL & GraphQL Endpoints**
-- **CSV Dumps & Open Data Portals**
-- **S3 / Open Cloud Buckets**
-- **BigQuery Public Datasets**
-- **GitHub Raw Files & Repositories**
-- **Torrents, Archives, and Mega-Catalogs**
+The frontend uses the same card renderer for all sources. Every result is normalized into:
 
-## Scalability & Protection Against Depletion
+```json
+{
+  "id": "source-id",
+  "type": "image | video | code | book | catalog",
+  "source": "Wikimedia Commons",
+  "kind": "image",
+  "title": "Result title",
+  "subtitle": "Short metadata",
+  "description": "Readable summary",
+  "thumbnail": "https://...",
+  "externalUrl": "https://...",
+  "downloadUrl": "https://...",
+  "meta": "Source metric"
+}
+```
 
-Hosting large-scale systems on platforms like Vercel is highly cost-effective (free for many use-cases), but rapid API requests can quickly deplete serverless execution limits (tokens) and lead to rate-limits from upstream data providers. 
+## Why the app may look broken on Netlify
 
-To prevent this and utilize Javascript to its absolute fullest advantage, **HooviDB employs a Multi-Tier Caching Strategy**:
+The original frontend calls routes like:
 
-1. **Vercel Edge Caching (CDN):** 
-   Our endpoints inject `Cache-Control: public, s-maxage=3600, stale-while-revalidate=86400` headers. This tells Vercel's global CDN to cache the raw JSON output at the edge for 1 hour. If 1,000 users search for the exact same query, the Vercel Edge handles 999 of them instantly. Your serverless function is only invoked **once**, costing zero extra compute tokens.
-   
-2. **In-Memory Application Cache:** 
-   Inside the backend layer, a blazing-fast local memory `Map` caches upstream provider data (like GitHub or TVMaze). If multiple concurrent requests hit the backend, the Node.js memory intercepts them instantly, protecting you from being IP-banned or rate-limited by the source APIs.
-   
-3. **Graceful Degradation:**
-   If a single data provider (e.g., GitHub Search) goes down or rate-limits the backend, HooviDB catches the error seamlessly without crashing the entire dashboard. The failed node simply returns an empty array, while the rest of the database queries continue functioning perfectly.
+```txt
+/api/status
+/api/image
+/api/video
+/api/catalog
+```
 
-## The Mega Catalog
+Those routes work only when the Node backend is running. A static Netlify deployment can serve the HTML/CSS/JS but may not run `server.js`, so searches can silently fail.
 
-HooviDB's central brain is powered by `hoovidb.json` - a massive, unified JSON schema aggregating over **10,000+** open APIs, dataset directories, and internet data meshes into a single, highly queryable index.
+To fix the most visible failure without touching the UI, Hoovi now loads:
 
-By protecting frontend keys and enforcing serverless multi-tier caching, HooviDB serves as the ultimate, hyper-fast window into the world's public data.
+```html
+<script src="hoovi-fallback.js"></script>
+<script src="app.js"></script>
+```
 
-## Hoovi Data Packs
+on `images.html` and `videos.html`.
 
-Hoovi now supports `/data` as an executable source registry, not just a static catalog.
+`hoovi-fallback.js` intercepts missing `/api/image`, `/api/video`, `/api/status`, and `/api/reload-data` requests and falls back to no-key browser-safe public sources:
+
+- Images: Wikimedia Commons Action API using `origin=*`.
+- Videos: Internet Archive Advanced Search API using JSON output.
+
+## Running locally
+
+```bash
+npm start
+```
+
+Then open:
+
+```txt
+http://localhost:3000
+```
+
+To syntax-check the current JavaScript:
+
+```bash
+npm run check
+```
+
+## Data packs
+
+Hoovi supports `/data` as an executable source registry, not just a static catalog.
 
 Supported file styles:
+
 - legacy mega-catalog JSON like `data/hoovidb.json`
 - plain JSON files full of links or API objects
 - Hoovi data packs with connectors and link lists
 - private Hoovi data packs with credentials when a provider requires a key
 
-### Safe local pattern
-
 Use:
-- `data/*.json` for shareable public packs
-- `data/*.private.json` for local-only packs with credentials
 
-`data/*.private.json` is ignored by git.
+```txt
+data/*.json           shareable public packs
+data/*.private.json   local-only packs with credentials
+```
 
-### Example pack
+`data/*.private.json` should stay ignored by git.
+
+### Example connector pack
 
 See `data/hoovi.pack.example.json`.
-
-Minimal structure:
 
 ```json
 {
@@ -102,25 +156,47 @@ Minimal structure:
 }
 ```
 
-If a connector needs a key, put the real credential only in an ignored `data/*.private.json` pack and reference it with `auth.credential_key`. Do not commit real keys or placeholder keys in public examples.
+If a connector needs a key, put the real credential only in an ignored private pack or backend environment variable. Do not commit real keys or fake placeholder keys.
 
-### Useful routes
+## Useful backend routes
 
-- `/api/status` shows registry counts and warnings
-- `/api/registry` lists loaded packs and connectors
-- `/api/reload-data` rescans `/data` without restarting the server
-- `/api/connector?id=<connector-id>&q=<query>` runs a generic connector pack
-- `/api/packs?q=<query>` runs all enabled `/data` connectors
-- `/api/download?...` resolves supported provider downloads such as Open Library Internet Archive files
+When `server.js` is running:
 
-Current real public media sources:
-- images use Wikimedia Commons with direct image file downloads
-- videos use Internet Archive movie records from 2000 onward
-- music uses Internet Archive audio records from 2005 onward
+- `/api/status` — registry counts and warnings
+- `/api/registry` — loaded packs and connectors
+- `/api/reload-data` — rescan `/data` without restarting
+- `/api/connector?id=<connector-id>&q=<query>` — run one connector
+- `/api/packs?q=<query>` — run enabled `/data` connectors
+- `/api/download?...` — resolve supported provider downloads
 
-Every search payload includes numeric `sourceStats` only: total APIs, connected APIs, failing APIs, and credential-backed keys. Hoovi never returns secret values to the frontend.
+## Source policy
 
-This means someone can contribute by adding:
-- a simple JSON list of source links
-- a richer connector pack
-- a private local pack with credentials for personal use
+Allowed:
+
+- no-key public APIs
+- RSS/Atom feeds
+- SPARQL endpoints
+- public JSON feeds
+- public metadata APIs
+- official bulk dumps
+- open-data catalogs
+- public domain / openly licensed media repositories
+
+Not allowed:
+
+- leaked API keys
+- scraped private data
+- paywalled data bypasses
+- user tokens in frontend code
+- committed `.env` secrets
+
+## Current public sources
+
+- **Wikimedia Commons** for images and media files.
+- **Internet Archive** for public video/audio/archive records.
+- **Open Library** for books and book metadata.
+- **GitHub REST API** for public code/repository data.
+- **Jikan** for no-key anime metadata.
+- **TVMaze** for no-key show metadata.
+
+Hoovi should grow by adding more legal source connectors, not by collecting exposed secrets.
