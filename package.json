@@ -1,0 +1,10 @@
+{
+  "name": "hoovi",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hoovi frontend shell with a lightweight Node API router.",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check app.js && node --check server.js"
+  }
+}

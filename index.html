@@ -1,33 +1,152 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hoovi - Movie Database</title>
-<style>
-body{margin:0;background:#070707;color:#f5f1e8;font-family:Arial,Helvetica,sans-serif}a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 36px));margin:auto}.header{border-bottom:1px solid #252525;background:#090909}.nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-size:30px;font-weight:900}.links{display:flex;gap:18px;color:#b8b0a4}.hero{padding:86px 0;background:linear-gradient(90deg,#080808,#151515)}.hero h1{font-size:72px;line-height:.92;margin:0 0 18px;letter-spacing:-4px}.hero p{color:#b8b0a4;font-size:18px;line-height:1.7;max-width:680px}.btn{display:inline-block;background:#d71920;color:#fff;border-radius:999px;padding:13px 18px;font-weight:800;margin-top:16px}.section{padding:42px 0}.section h2{font-size:38px;margin:0 0 18px;letter-spacing:-2px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}.card{background:#151515;border:1px solid #2d2d2d;border-radius:16px;overflow:hidden}.poster{height:260px;background:linear-gradient(135deg,#282828,#101010);padding:18px;display:flex;align-items:end;font-size:26px;font-weight:900;line-height:1}.body{padding:16px}.body h3{margin:0 0 10px}.meta{color:#aaa;display:flex;gap:8px;flex-wrap:wrap}.pill{border:1px solid #333;border-radius:999px;padding:6px 9px;font-size:13px}.footer{border-top:1px solid #252525;color:#999;padding:26px 0}.notice{background:#111;border:1px solid #333;border-radius:16px;padding:18px;color:#b8b0a4}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.nav{height:auto;padding:18px 0;display:block}.links{margin-top:14px;flex-wrap:wrap}.hero h1{font-size:48px}}@media(max-width:560px){.grid{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hoovi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="header"><div class="wrap nav"><a class="brand" href="/">Hoovi</a><nav class="links"><a href="#movies">Movies</a><a href="#stars">Stars</a><a href="#genres">Genres</a><a href="#news">News</a><a href="#api">API</a></nav></div></header>
-<section class="hero"><div class="wrap"><h1>The movie database built for discovery.</h1><p>Hoovi is a clean movie catalogue for films, stars, genres, industry updates and a Spring Boot database backend. This static version works without Netlify backend power.</p><a class="btn" href="#movies">Explore movies</a></div></section>
-<main class="wrap">
-<section class="section" id="movies"><h2>Featured movies</h2><div class="grid" id="movieGrid"></div></section>
-<section class="section" id="stars"><h2>Featured stars</h2><div class="grid" id="starGrid"></div></section>
-<section class="section" id="genres"><h2>Genres</h2><div class="grid" id="genreGrid"></div></section>
-<section class="section" id="news"><h2>News</h2><div class="notice">Movie news integration can be connected through the backend later. The static frontend remains available even when Netlify or backend services are down.</div></section>
-<section class="section" id="api"><h2>API</h2><div class="notice">Full API power is available when the Spring Boot backend is deployed separately: /api/movies, /api/actors, /api/genres, and /swagger-ui.html.</div></section>
-</main>
-<footer class="footer"><div class="wrap">Hoovi. Static frontend first, live database backend when deployed.</div></footer>
-<script>
-const fallbackMovies=[['The Shawshank Redemption',1994,'Drama','9.3'],['The Godfather',1972,'Crime','9.2'],['The Dark Knight',2008,'Action','9.0'],['Parasite',2019,'Thriller','8.5'],['Oppenheimer',2023,'Biography','8.3'],['Nairobi Half Life',2012,'African Cinema','7.3'],['Dune',2021,'Sci-Fi','8.0'],['Black Panther',2018,'Adventure','7.3']];
-const stars=['Morgan Freeman','Al Pacino','Christian Bale','Song Kang-ho','Cillian Murphy','Joseph Wairimu','Zendaya','Michael B. Jordan'];
-const genres=['Action','Drama','Crime','Thriller','Sci-Fi','Biography','African Cinema','Adventure'];
-function movieCard(m){return '<article class="card"><div class="poster">'+m[0]+'</div><div class="body"><h3>'+m[0]+'</h3><p class="meta"><span class="pill">'+m[1]+'</span><span class="pill">'+m[2]+'</span><span class="pill">IMDb '+m[3]+'</span></p></div></article>'}
-function textCard(t,s){return '<article class="card"><div class="body"><h3>'+t+'</h3><p class="meta"><span class="pill">'+s+'</span></p></div></article>'}
-document.getElementById('movieGrid').innerHTML=fallbackMovies.map(movieCard).join('');
-document.getElementById('starGrid').innerHTML=stars.map(x=>textCard(x,'Actor')).join('');
-document.getElementById('genreGrid').innerHTML=genres.map(x=>textCard(x,'Genre')).join('');
-</script>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-badge">H</div>
+        <div>
+          <div class="brand-name">Hoovi</div>
+          <div class="brand-subtitle">Universal data aggregation</div>
+        </div>
+      </div>
+
+      <nav class="top-nav" id="top-nav">
+        <button class="nav-pill active" type="button" data-view="dashboard">Dashboard</button>
+        <button class="nav-pill" type="button" data-view="catalog">Catalog</button>
+        <button class="nav-pill" type="button" data-view="movies">Movies</button>
+        <button class="nav-pill" type="button" data-view="anime">Anime</button>
+        <button class="nav-pill" type="button" data-view="music">Music</button>
+        <button class="nav-pill" type="button" data-view="books">Books</button>
+        <button class="nav-pill" type="button" data-view="code">Code</button>
+        <button class="nav-pill" type="button" data-view="images">Images</button>
+        <button class="nav-pill" type="button" data-view="videos">Videos</button>
+      </nav>
+
+      <div class="header-actions">
+        <button class="ghost-pill" id="mode-pill" type="button">Mode: personal</button>
+        <button class="ghost-pill" id="status-pill" type="button">Syncing...</button>
+        <button class="primary-pill" id="sync-btn" type="button">Sync Now</button>
+      </div>
+    </header>
+
+    <main class="dashboard-grid">
+      <aside class="rail rail-left">
+        <section class="panel stack-panel">
+          <div class="panel-eyebrow">Saved State</div>
+          <div class="stack-list" id="saved-state-list"></div>
+        </section>
+
+        <section class="panel stack-panel">
+          <div class="panel-eyebrow">Top Movers</div>
+          <div class="stack-list" id="top-movers-list"></div>
+        </section>
+
+        <section class="panel stack-panel">
+          <div class="panel-eyebrow">Source Health</div>
+          <div class="stack-list" id="source-health-list"></div>
+        </section>
+      </aside>
+
+      <section class="main-column">
+        <section class="panel hero-panel">
+          <div class="hero-grid">
+            <div class="hero-copy">
+              <div class="panel-eyebrow">Overview</div>
+              <h1 id="hero-title">Discovery command center.</h1>
+              <p id="hero-summary">Keep discovery, scoring, notes, source health, and watchlist signals in one compact view.</p>
+
+              <div class="query-bar">
+                <input id="query-input" type="text" placeholder="Search topics, packages, repos, books..." autocomplete="off">
+                <button class="primary-pill" id="query-btn" type="button">Analyze Topic</button>
+              </div>
+
+              <div class="hero-actions">
+                <button class="primary-pill soft" id="feed-btn" type="button">Open Feed</button>
+                <button class="ghost-pill" id="sources-btn" type="button">Tune Sources</button>
+              </div>
+            </div>
+
+            <div class="hero-side">
+              <div class="mini-grid" id="overview-mini-grid"></div>
+              <div class="brief-panel">
+                <div class="panel-eyebrow accent">AI Briefing</div>
+                <p id="ai-briefing">Warming up live sources.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary-strip" id="summary-strip"></section>
+
+        <section class="panel">
+          <div class="section-head">
+            <div>
+              <div class="panel-eyebrow accent">Catalog View</div>
+              <h2 id="catalog-title">Personalized for you</h2>
+            </div>
+            <div class="section-meta" id="picks-meta">Loading picks...</div>
+          </div>
+          <div class="card-grid" id="picks-grid"></div>
+          <div class="pagination-bar" id="pagination-bar">
+            <button class="ghost-pill" id="page-prev" type="button" disabled>Previous</button>
+            <span class="page-info" id="page-info">Page 1</span>
+            <button class="ghost-pill" id="page-next" type="button">Next</button>
+          </div>
+        </section>
+
+        <div class="dual-panels">
+          <section class="panel">
+            <div class="panel-eyebrow accent">Coverage</div>
+            <h2>Source distribution</h2>
+            <div class="chart-bars" id="coverage-chart"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-eyebrow accent">Activity</div>
+            <h2>Sync pulse</h2>
+            <div class="pulse-wrap">
+              <svg class="pulse-chart" id="pulse-chart" viewBox="0 0 420 170" preserveAspectRatio="none" aria-hidden="true"></svg>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-eyebrow accent">Feed</div>
+          <h2>Live discovery feed</h2>
+          <div class="feed-list" id="feed-list"></div>
+        </section>
+      </section>
+
+      <aside class="rail rail-right">
+        <section class="panel stack-panel">
+          <div class="panel-eyebrow accent">Quick Links</div>
+          <div class="stack-list" id="quick-links-list"></div>
+        </section>
+
+        <section class="panel stack-panel">
+          <div class="panel-eyebrow accent">Notes</div>
+          <div class="note-list" id="notes-list"></div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal-content"></div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack"></div>
+
+  <script src="app.js"></script>
 </body>
 </html>
